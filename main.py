@@ -53,7 +53,8 @@ def parse_afdpro(trace_file_path, excel_file_path, tab_top, tab_left, mask=['cur
         ))
 
     excel_file = openpyxl.load_workbook(filename = excel_file_path)
-    excel_file.create_sheet('trace')
+    if 'trace' not in excel_file.sheetnames:
+        excel_file.create_sheet('trace')
     sheet = excel_file['trace']
 
     for i in range(len(iterations)):

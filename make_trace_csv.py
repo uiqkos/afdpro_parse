@@ -1,0 +1,36 @@
+import sys, csv
+
+
+fieldnames = [
+    'Адрес', 'Команда', 
+    'AX', 'BX', 'CX', 'DX', 'IP', 
+    'OF', 'DF', 'IF', 'SF', 'ZF', 'AF', 'PF', 'CF',
+    'Значение стека'  
+]
+
+with open(sys.argv[1], 'r') as trace:
+    trace_lines = trace.readlines()
+
+csv_table = open(sys.argv[1].split('.')[0] + '.csv', 'w')
+writer = csv.DictWriter(csv_table, fieldnames = fieldnames, quoting=csv.QUOTE_ALL)
+writer.writeheader()
+
+for line_num in range(7, len(trace_lines) - 5, 4):
+    words = []
+    for local_line_num in range(-4, 4):
+        words.append(trace_lines[line_num + local_line_num].replace('RET', 'RET none').split())
+
+    writer.writerow({
+        'Адрес': words[0][0],
+        'Команда': words[0][1].lower(),
+        'AX': words[4][3].split('=')[1],
+        'BX': words[5][0].split('=')[1], 
+        'CX': words[6][8].split('=')[1],
+        'DX': words[7][8].split('=')[1], 
+        'IP': words[4][0], 
+        'OF': words[7][0], 'DF': words[7][1], 'IF': words[7][2], 'SF': words[7][3], 
+        'ZF': words[7][4], 'AF': words[7][5], 'PF': words[7][6], 'CF': words[7][7],
+        'Значение стека': words[4][7]
+    })
+
+csv_table.close()

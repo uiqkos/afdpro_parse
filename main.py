@@ -14,7 +14,7 @@ variables = [
 ]
 equals = {
     'tfp' : 'trace_file_path',
-    'cfp' : 'csv_file_path',
+    'tbfp' : 'table_file_path',
     'sn'  : 'sheet_name',
     'tl'  : 'tab_left',
 }
@@ -38,11 +38,40 @@ def parse_args(args):
         result[key] = value
     return result
 
+def to_excel(excel_file_path, sheet_name, tab_top, iterations, mask):
+    try:
+        excel_file = openpyxl.load_workbook(filename = excel_file_path)
+    except:
+        excel_file = openpyxl.Workbook()
+
+    if sheet_name not in excel_file.sheetnames:
+        excel_file.create_sheet(sheet_name)
+    sheet = excel_file[sheet_name]
+
+    tab_top = int(tab_top)
+
+    for i in range(len(iterations)):
+        for k, arg in enumerate(mask):
+            sheet.cell(row=tab_top+i+1, column=k+1).value = iterations[i].get(mask[k])
+
+    excel_file.save(excel_file_path)
+
+def to_csv(csv_file_path, iterations, mask):
+    csv_file = open(csv_file_path, 'w')
+    writer = csv.DictWriter(csv_file, fieldnames=mask, quoting=csv.QUOTE_ALL)
+    writer.writeheader()
+
+    for iteration in iterations:
+        writer.writerow({key: iteration.get(key) for key in mask})
+
+    csv_file.close()
+
 def parse_afdpro(
     trace_file_path='trace.txt', 
-    csv_file_path='trace.csv',
+    table_file_path='trace.csv',
     sheet_name='trace',
     tab_top=0,
+    type='csv',
     mask=['current', 'command', 'AX', 'BX', 'CX', 'DX', 'OF', 'DF', 'IF', 'SF', 'ZF', 'AF', 'PF', 'CF', 'Stack +0']
 ):
 
@@ -61,14 +90,11 @@ def parse_afdpro(
             command      = temp[1:]
         ))
 
-    csv_file = open(csv_file_path, 'w')
-    writer = csv.DictWriter(csv_file, fieldnames=mask, quoting=csv.QUOTE_ALL)
-    writer.writeheader()
-
-    for iteration in iterations:
-        writer.writerow({key: iteration.get(key) for key in mask})
-
-    csv_file.close()
+    if type == 'csv':
+        to_csv(table_file_path, iterations, mask)
+    elif type == 'excel':
+        to_excel(table_file_path, sheet_name, tab_top, iterations, mask)
+    file.close()
 
 if __name__ == '__main__':
     parse_afdpro(**parse_args(sys.argv[1:]))

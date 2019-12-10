@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 import sys, subprocess, csv
 
 objdump = subprocess.run(['objdump', sys.argv[1],
@@ -7,7 +8,7 @@ objdump = subprocess.run(['objdump', sys.argv[1],
                     '-M', 'intel',
                     '--adjust-vma=0x100'], stdout=subprocess.PIPE)
 
-lines = objdump.stdout.decode('ascii').split('\n')
+lines = objdump.stdout.decode('utf-8').split('\n')
 
 
 fieldnames = [

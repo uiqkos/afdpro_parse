@@ -10,21 +10,40 @@ variables = [
     'CX', 'BP', 'ES', 'Stack +4',
     'DX', 'SP', 'SS', 'Stack +6',
     'OF', 'DF', 'IF', 'SF', 'ZF', 'AF', 'PF', 'CF',
-    'current', 'command'
+    'current_address', 'command'
 ]
 equals = {
     'tfp' : 'trace_file_path',
     'tbfp' : 'table_file_path',
     'sn'  : 'sheet_name',
-    'tl'  : 'tab_left',
+    'tt'  : 'tab_top',
 }
 
 class Iteration:
-    def __init__(self, reg_values, flags_values, curr_addr, command):
-        values = reg_values+flags_values+curr_addr+command
+    def __init__(self, reg_values, flags_values, current_address, command, address):
+        values = reg_values+flags_values+current_address+command
         self.values = dict.fromkeys(variables)
         for index, key in enumerate(self.values.keys()):
             self.values[key] = values[index]
+        if len(address) == 0:
+            self.values['address'] = ''
+        else:
+            result = 0
+            expr = address[0][1:-1]
+            opers = re.findall('[+-]', expr)
+            vals = re.split('[+-]', expr)
+            for i, val in enumerate(vals):
+                if val in variables:
+                    # print('true')
+                    vals[i] = int(eval('0x' + self.get(val)))
+                else:
+                    vals[i] = int(eval('0x' + val))
+
+            for i, oper in enumerate(opers):
+                result += eval(str(vals[i]) + oper + str(vals[i + 1]))
+
+            self.values['address'] = (hex(result))[2:]
+            print(self.get('address'))
 
     def get(self, key):
         return self.values[key]
@@ -72,7 +91,7 @@ def parse_afdpro(
     sheet_name='trace',
     tab_top=0,
     type='csv',
-    mask=['current', 'command', 'AX', 'BX', 'CX', 'DX', 'OF', 'DF', 'IF', 'SF', 'ZF', 'AF', 'PF', 'CF', 'Stack +0']
+    mask=['current_address', 'command', 'AX', 'BX', 'CX', 'DX', 'OF', 'DF', 'IF', 'SF', 'ZF', 'AF', 'PF', 'CF', 'Stack +0', 'address']
 ):
 
     with open(trace_file_path, 'r') as file:
@@ -83,16 +102,19 @@ def parse_afdpro(
 
     for i, command in enumerate(commands):
         temp = re.findall('\w+', command[:12])
+        # print(re.search(r'\[[A-Z0-9+-]+\]', command[12:41]), command[12:41])
         iterations.append( Iteration(
-            reg_values   = re.findall('[0-9A-F]{4}', command[42:]), # hex number ignore first 42 chars
-            flags_values = re.findall('[0-1]', command[-63:-40]), # 0 or 1
-            curr_addr    = temp[:1],
-            command      = temp[1:]
+            reg_values      = re.findall('[0-9A-F]{4}', command[42:]), # hex number ignore first 42 chars
+            flags_values    = re.findall('[0-1]', command[-63:-40]), # 0 or 1
+            current_address = temp[:1],
+            command         = temp[1:],
+            address         = re.findall(r'\[[A-Z0-9+-]+\]', command[12:41])
         ))
 
     if type == 'csv':
         to_csv(table_file_path, iterations, mask)
     elif type == 'excel':
+        pass
         to_excel(table_file_path, sheet_name, tab_top, iterations, mask)
     file.close()
 

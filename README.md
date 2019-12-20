@@ -27,6 +27,7 @@
 3. type - тип таблицы (csv/excel)
 4. sheet_name (sn) - имя листа (только для excel)
 5. tab_top (tt) - отступ сверху (только для excel)
+
 Аргументы по умолчанию: 
   trace_file_path='trace.txt', 
   table_file_path='trace.csv', 

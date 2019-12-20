@@ -95,7 +95,7 @@ def parse_afdpro(
     sheet_name='trace',
     tab_top=0,
     type='csv',
-    mask=['current_address', 'command', 'AX', 'BX', 'CX', 'DX', 'OF', 'DF', 'IF', 'SF', 'ZF', 'AF', 'PF', 'CF', 'Stack +0', 'address']
+    mask=['current_address', 'command', 'AX', 'BX', 'CX', 'current_address', 'DX', 'OF', 'DF', 'IF', 'SF', 'ZF', 'AF', 'PF', 'CF', 'address', 'Stack +0']
 ):
 
     with open(trace_file_path, 'r') as file:

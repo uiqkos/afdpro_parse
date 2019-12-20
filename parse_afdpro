@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 import sys
 import re
 import csv
@@ -23,30 +23,34 @@ class Iteration:
     def __init__(self, reg_values, flags_values, current_address, command, address):
         values = reg_values+flags_values+current_address+command
         self.values = dict.fromkeys(variables)
+
         for index, key in enumerate(self.values.keys()):
             self.values[key] = values[index]
-        if len(address) == 0:
+
+        if address == [][:]:
             self.values['address'] = ''
-        else:
-            result = 0
-            expr = address[0][1:-1]
-            opers = re.findall('[+-]', expr)
-            vals = re.split('[+-]', expr)
-            for i, val in enumerate(vals):
-                if val in variables:
-                    # print('true')
-                    vals[i] = int(eval('0x' + self.get(val)))
-                else:
-                    vals[i] = int(eval('0x' + val))
+            return
 
-            for i, oper in enumerate(opers):
-                result += eval(str(vals[i]) + oper + str(vals[i + 1]))
+        expr = address[0][1:-1]
+        const = re.match('[0-9A-F]{4}', expr)
+        ev_vars = {
+            'SI' : self.get_hex('SI'),
+            'BP' : self.get_hex('BP'),
+            'BX' : self.get_hex('BX'),
+        }
 
-            self.values['address'] = (hex(result))[2:]
-            print(self.get('address'))
+        if const is not None:
+            ev_vars['const'] = eval('0x' + const.group(0))
+
+        expr = re.sub('[0-9A-F]{4}', 'const', expr)
+        self.values['address'] = hex(eval(expr, ev_vars)).replace('0x', '').zfill(4).upper()
+
 
     def get(self, key):
         return self.values[key]
+
+    def get_hex(self, key):
+        return eval('0x' + self.values[key])
 
 def parse_args(args):
     result = dict()

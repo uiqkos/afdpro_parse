@@ -32,7 +32,10 @@ class Iteration:
             return
 
         expr = address[0][1:-1]
-        const = re.match('[0-9A-F]{4}', expr)
+
+        const = re.match('[0-9A-F]{4}|[0-9]{2}', expr)
+        expr = re.sub('[0-9A-F]{4}|[0-9]{2}', 'const', expr)
+
         ev_vars = {
             'SI' : self.get_hex('SI'),
             'BP' : self.get_hex('BP'),
@@ -41,8 +44,7 @@ class Iteration:
 
         if const is not None:
             ev_vars['const'] = eval('0x' + const.group(0))
-
-        expr = re.sub('[0-9A-F]{4}', 'const', expr)
+        
         self.values['address'] = hex(eval(expr, ev_vars)).replace('0x', '').zfill(4).upper()
 
 
